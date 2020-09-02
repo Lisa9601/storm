@@ -81,7 +81,7 @@ public class ReadTopoConfTest {
         SingleUserPrincipal user = new SingleUserPrincipal("valid_user");
         subject.getPrincipals().add(user);
 
-        store.createBlob(ConfigUtils.masterStormCodeKey("topology2"),Utils.toCompressedJsonConf(topoConf), meta, subject);
+        store.createBlob(ConfigUtils.masterStormConfKey("topology2"),Utils.toCompressedJsonConf(topoConf), meta, subject);
 
     }
 
