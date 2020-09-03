@@ -8,11 +8,7 @@ import org.apache.storm.generated.*;
 import org.apache.storm.nimbus.NimbusInfo;
 import org.apache.storm.security.auth.SingleUserPrincipal;
 import org.apache.storm.testing.InProcessZookeeper;
-import org.apache.storm.topology.TopologyBuilder;
-import org.apache.storm.trident.util.LRUMap;
 import org.apache.storm.utils.ConfigUtils;
-import org.apache.storm.utils.LruMap;
-import org.apache.storm.utils.ThriftTopologyUtils;
 import org.apache.storm.utils.Utils;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -24,12 +20,13 @@ import org.junit.runners.Parameterized;
 import javax.security.auth.Subject;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 
 @RunWith(Parameterized.class)
-public class ReadTopoConfTest {
+public class UpdateTopoConfTest {
 
     private static InProcessZookeeper zk;
     private static File baseFile;
@@ -37,11 +34,13 @@ public class ReadTopoConfTest {
 
     private String topoName;
     private Subject subject;
+    private Map<String,Object> conf;
     private boolean expected;
 
-    public ReadTopoConfTest(String topoName, Subject subject, boolean expected) {
+    public UpdateTopoConfTest(String topoName, Subject subject, Map<String,Object> conf, boolean expected) {
         this.topoName = topoName;
         this.subject = subject;
+        this.conf = conf;
         this.expected = expected;
     }
 
@@ -103,11 +102,15 @@ public class ReadTopoConfTest {
         SingleUserPrincipal invalid_user = new SingleUserPrincipal("invalid_user");
         subject2.getPrincipals().add(invalid_user);
 
+        Map<String, Object> conf = new Config();
+        conf.put("prova","prova");
+
         return Arrays.asList(new Object[][] {
-                { "topology1", null, true },
-                { "topology2", subject1, true },
-                { "topology2", subject2, false},
-                { "topology3", null, false },
+                { "topology1", null, conf, true },
+                { "topology1", null, null, false },     //NullPointerException
+                { "topology2", subject1, conf, true },
+                { "topology2", subject2, conf, false},  //AuthorizationException
+                { "topology3", null, conf, false },     //KeyNotFoundException
         });
     }
 
@@ -118,12 +121,15 @@ public class ReadTopoConfTest {
         boolean result = true;
 
         try {
-            Map<String, Object> conf = cache.readTopoConf(topoName,subject);
-            /*
-            if(topo.compareTo(topology) != 0){
+
+            cache.updateTopoConf(topoName,subject,conf);
+
+            Map<String, Object> topoConf = cache.readTopoConf(topoName,subject);
+
+            if(!conf.equals(topoConf)){
                 result = false;
             }
-            */
+
         } catch (AuthorizationException | KeyNotFoundException | NullPointerException | IOException e) {
             e.printStackTrace();
             result = false;
@@ -131,7 +137,5 @@ public class ReadTopoConfTest {
 
         Assert.assertEquals(expected,result);
     }
-
-
 
 }

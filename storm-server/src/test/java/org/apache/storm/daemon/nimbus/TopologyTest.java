@@ -24,24 +24,24 @@ import java.util.Map;
 
 
 @RunWith(Parameterized.class)
-public class ReadTopologyTest {
+public class TopologyTest {
 
-    private static InProcessZookeeper zk;
-    private static File baseFile;
-    private static TopoCache cache;
+    private InProcessZookeeper zk;
+    private File baseFile;
+    private TopoCache cache;
 
     private String topoName;
     private Subject subject;
     private boolean expected;
 
-    public ReadTopologyTest(String topoName, Subject subject, boolean expected) {
+    public TopologyTest(String topoName, Subject subject, boolean expected) {
         this.topoName = topoName;
         this.subject = subject;
         this.expected = expected;
     }
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         baseFile = new File("target/blob-store-test");
 
         try {
@@ -69,7 +69,6 @@ public class ReadTopologyTest {
         StormTopology  topology = builder.createTopology();
         cache.addTopology("topology1", new Subject(), topology);
 
-        //final List<AccessControl> acl = BlobStoreAclHandler.WORLD_EVERYTHING;
         SettableBlobMeta meta = new SettableBlobMeta();
         AccessControl acc = new AccessControl(AccessControlType.OTHER, 0x00);
         acc.set_name("invalid_user");
@@ -82,8 +81,9 @@ public class ReadTopologyTest {
 
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
+        cache.clear();
         FileUtils.deleteDirectory(baseFile);
         zk.close();
     }
@@ -103,24 +103,20 @@ public class ReadTopologyTest {
         return Arrays.asList(new Object[][] {
                 { "topology1", null, true },
                 { "topology2", subject1, true },
-                { "topology2", subject2, false},
-                { "topology3", null, false },
+                { "topology2", subject2, false},    //AuthorizationException
+                { "topology3", null, false },       //KeyNotFoundException
         });
     }
 
 
     @Test
-    public void test(){
+    public void readTest(){
 
         boolean result = true;
 
         try {
-            StormTopology topo = cache.readTopology(topoName,subject);
-            /*
-            if(topo.compareTo(topology) != 0){
-                result = false;
-            }
-            */
+            cache.readTopology(topoName,subject);
+
         } catch (AuthorizationException | KeyNotFoundException | NullPointerException | IOException e) {
             e.printStackTrace();
             result = false;
@@ -129,6 +125,22 @@ public class ReadTopologyTest {
         Assert.assertEquals(expected,result);
     }
 
+
+    @Test
+    public void deleteTest(){
+
+        boolean result = true;
+
+        try {
+            cache.deleteTopology(topoName,subject);
+
+        } catch (AuthorizationException | KeyNotFoundException | NullPointerException e) {
+            e.printStackTrace();
+            result = false;
+        }
+
+        Assert.assertEquals(expected,result);
+    }
 
 
 }
