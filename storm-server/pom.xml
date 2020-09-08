@@ -134,7 +134,49 @@
             <version>2.0.2</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.5.2</version>
+        </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.5.2</version>
+                <configuration>
+                    <targetClasses>
+                        <param>org.apache.storm.daemon.nimbus.TopoCache</param>
+                        <param>org.apache.storm.pacemaker.Pacemaker</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>org.apache.storm.daemon.nimbus.TopologyTest</param>
+                        <param>org.apache.storm.daemon.nimbus.TopoConfTest</param>
+                        <param>org.apache.storm.daemon.nimbus.UpdateTopologyTest</param>
+                        <param>org.apache.storm.daemon.nimbus.UpdateTopoConfTest</param>
+                        <param>org.apache.storm.pacemaker.PacemakerTest</param>
+                    </targetTests>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
 
 </project>

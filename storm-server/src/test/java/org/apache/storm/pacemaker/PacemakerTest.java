@@ -54,6 +54,7 @@ public class PacemakerTest {
         pulseData.set_pulse(pulse);
 
         return Arrays.asList(new Object[][] {
+                { null, false, null, false },
                 { new HBMessage(HBServerMessageType.NOT_AUTHORIZED, null), false, null, false },
                 { new HBMessage(HBServerMessageType.CREATE_PATH, validPath), false, HBServerMessageType.CREATE_PATH_RESPONSE, true},
                 { new HBMessage(HBServerMessageType.EXISTS, validPath), false, HBServerMessageType.NOT_AUTHORIZED, true},
@@ -81,7 +82,14 @@ public class PacemakerTest {
 
         Whitebox.setInternalState(pacemaker,"heartbeats",heartbeats);
 
-        HBMessage response = pacemaker.handleMessage(message, auth);
+        HBMessage response = null;
+
+        try{
+            response = pacemaker.handleMessage(message, auth);
+
+        } catch( NullPointerException e ){
+            e.printStackTrace();
+        }
 
         if(response != null && expectedType == response.get_type() ){
             result = true;
